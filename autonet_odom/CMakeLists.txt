@@ -15,11 +15,24 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   std_msgs
-  tf2
+  tf2 tf2_ros message_generation
 )
 # find_package( OpenCV REQUIRED )
 
+add_service_files(
+        FILES
+        SetOdom.srv
+)
 
+generate_messages()
+
+catkin_package(
+        #  INCLUDE_DIRS include
+        #  LIBRARIES autonet_odom
+        #  CATKIN_DEPENDS cv_birdge nav_msgs roscpp rospy sensor_msgs std_msgs tf
+        #  DEPENDS system_lib
+        CATKIN_DEPENDS message_runtime
+)
 
 include_directories(
 # include
@@ -33,3 +46,4 @@ add_executable(odom src/odom.cpp)
 target_link_libraries(odom
   ${catkin_LIBRARIES}
 )
+catkin_package()
