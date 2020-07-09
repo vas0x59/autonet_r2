@@ -16,15 +16,17 @@
 #include <geometry_msgs/TransformStamped.h>
 #include "odom_model.h"
 #include "autonet_odom/SetOdom.h"
+//#include <boost/property_tree/ptree.hpp>
+//#include <boost/property_tree/json_parser.hpp>
+//#include <boost/foreach.hpp>
 
 using namespace std;
 
-float robot_W = 0;
-float wheel_d = 0;
-float update_rate = 30;
+double robot_W = 0.32;
+double update_rate = 30;
 string frame_name = "odom";
 string base_frame_name = "base_link";
-
+//string json_config_path = "../config.json";
 float prev_m1_m = 0;
 float prev_m2_m = 0;
 
@@ -41,26 +43,24 @@ ros::Publisher motor1, motor2, odom_pub;
 
 
 // Callbacks
-void m1tv_clb(std_msgs::Float32 msg){
+void m1tv_clb(std_msgs::Float32 msg) {
     cm1 = msg.data;
 }
 
-void m2tv_clb(std_msgs::Float32 msg){
+void m2tv_clb(std_msgs::Float32 msg) {
     cm2 = msg.data;
 }
 
-void cmd_vel_clb(geometry_msgs::Twist msg){
+void cmd_vel_clb(geometry_msgs::Twist msg) {
     target_x_v = msg.linear.x;
     target_a_z_v = msg.angular.z;
 }
 
 // void set_odom(data)
 
-void control_motors()
-{
-    if (cmd_vel_status)
-    {
-        float m1_target_v =0 , m2_target_v = 0;
+void control_motors() {
+    if (cmd_vel_status) {
+        float m1_target_v = 0, m2_target_v = 0;
         m1_target_v = target_x_v + target_a_z_v * robot_W * 2;
         m2_target_v = target_x_v - target_a_z_v * robot_W * 2;
         std_msgs::Float32 m_msg;
@@ -75,7 +75,7 @@ OdometryModel odom_calc;
 ros::Time last_time;
 
 
-void calc_odometry(){
+void calc_odometry() {
     if (!first_time) {
         static tf2_ros::TransformBroadcaster br;
 
@@ -117,26 +117,34 @@ void calc_odometry(){
         odom_pub.publish(odom);
         br.sendTransform(transformStamped);
         last_time = current_time;
-    }
-    else {
+    } else {
         first_time = false;
     }
 }
 
-autonet_odom::SetOdomResponse set_odom(autonet_odom::SetOdomRequest data){
+autonet_odom::SetOdomResponse set_odom(autonet_odom::SetOdomRequest data) {
     odom_calc.set(data.x, data.y, data.yaw);
     return autonet_odom::SetOdomResponse();
 }
 
-void update(){
+void update() {
     control_motors();
     calc_odometry();
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
+
     ros::init(argc, argv, "autonet_odom");
     ros::NodeHandle nh;
+
+    nh.param("/autonet_odom/robot_W", robot_W, 0.32);
+    nh.param("/autonet_odom/odom_frame_name", frame_name, string("odom"));
+    nh.param("/autonet_odom/base_frame_name", base_frame_name, string("base_link"));
+    nh.param("/autonet_odom/update_rate", update_rate, 25.0);
+    ROS_INFO("autonet_odom");
+    ROS_INFO_STREAM_NAMED("Odom parameters",
+                           "robot_W: " << robot_W << " update_rate: " << update_rate << " odom_frame_name: "
+                                       << frame_name << " base_frame_name: " << base_frame_name);
     last_time = ros::Time::now();
     odom_calc = OdometryModel(robot_W);
     motor1 = nh.advertise<std_msgs::Float32>("/motor1", 5);
@@ -147,11 +155,11 @@ int main(int argc, char **argv)
     ros::Subscriber enc2_sub = nh.subscribe("/encoder2", 5, m2tv_clb);
 
     ros::Rate r(update_rate); // 10 hz
-    while (ros::ok())
-    {
+    while (ros::ok()) {
         update();
         r.sleep();
         ros::spinOnce();
     }
+
     return 0;
 }
