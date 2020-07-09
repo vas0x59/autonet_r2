@@ -21,7 +21,7 @@ using namespace std;
 
 float robot_W = 0;
 float wheel_d = 0;
-float update_rate = 0;
+float update_rate = 30;
 string frame_name = "odom";
 string base_frame_name = "base_link";
 
@@ -128,6 +128,11 @@ autonet_odom::SetOdomResponse set_odom(autonet_odom::SetOdomRequest data){
     return autonet_odom::SetOdomResponse();
 }
 
+void update(){
+    control_motors();
+    calc_odometry();
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "autonet_odom");
@@ -141,5 +146,12 @@ int main(int argc, char **argv)
     ros::Subscriber enc1_sub = nh.subscribe("/encoder1", 5, m1tv_clb);
     ros::Subscriber enc2_sub = nh.subscribe("/encoder2", 5, m2tv_clb);
 
+    ros::Rate r(update_rate); // 10 hz
+    while (ros::ok())
+    {
+        update();
+        r.sleep();
+        ros::spinOnce();
+    }
     return 0;
 }
