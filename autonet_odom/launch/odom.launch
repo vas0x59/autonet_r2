@@ -2,7 +2,7 @@
     <node pkg="autonet_odom" type="odom" name="autonet_odom" output="screen">
         <param name="robot_W" value="0.32" />
         <param name="update_rate" value="30" />
-        <param name="odom_frame_name:" value="odom" />
-        <param name="base_frame_name:" value="base_link" />
+        <param name="odom_frame_name" value="odom" />
+        <param name="base_frame_name" value="base_link" />
     </node>
 </launch>
