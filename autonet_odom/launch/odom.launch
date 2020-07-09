@@ -5,5 +5,4 @@
         <param name="odom_frame_name:" value="odom" />
         <param name="base_frame_name:" value="base_link" />
     </node>
-
 </launch>
