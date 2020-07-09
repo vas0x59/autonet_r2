@@ -1,5 +1,5 @@
 # autonet_r2
-Autonet Rewrite code to cpp
+Autonet Rewrite code to C++
 
 ```
 
