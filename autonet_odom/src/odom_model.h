@@ -15,6 +15,7 @@ struct OdometryOut {
 
 class OdometryModel{
     public:
+        OdometryModel();
         OdometryModel(float w_);
         OdometryOut calc(float dt, float dl, float dr);
         void set(float x_, float y_, float o_);
@@ -38,6 +39,10 @@ class OdometryModel{
         float vy = 0;
         float vo = 0;
 };
+
+OdometryModel::OdometryModel(){
+    w = 0;
+}
 
 
 OdometryModel::OdometryModel(float w_){
