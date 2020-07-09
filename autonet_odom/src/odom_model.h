@@ -4,40 +4,40 @@
 
 
 struct OdometryOut {
-    float x;
-    float y;
-    float o;
-    float vx;
-    float vy;
-    float vo;
+    double x;
+    double y;
+    double o;
+    double vx;
+    double vy;
+    double vo;
 };
 
 
 class OdometryModel{
     public:
         OdometryModel();
-        OdometryModel(float w_);
-        OdometryOut calc(float dt, float dl, float dr);
-        void set(float x_, float y_, float o_);
+        OdometryModel(double w_);
+        OdometryOut calc(double dt, double dl, double dr);
+        void set(double x_, double y_, double o_);
     private:
-        float w = 0.34;
-        float Dl = 0;
-        float Dr = 0;
-        float pDr = 0;
-        float pDl = 0;
-        float d = 0;
+        double w = 0.34;
+        double Dl = 0;
+        double Dr = 0;
+        double pDr = 0;
+        double pDl = 0;
+        double d = 0;
 
-        float x = 0;
-        float y = 0;
-        float o = 0;
+        double x = 0;
+        double y = 0;
+        double o = 0;
 
-        float px = 0;
-        float py = 0;
-        float po = 0;
+        double px = 0;
+        double py = 0;
+        double po = 0;
 
-        float vx = 0;
-        float vy = 0;
-        float vo = 0;
+        double vx = 0;
+        double vy = 0;
+        double vo = 0;
 };
 
 OdometryModel::OdometryModel(){
@@ -45,11 +45,11 @@ OdometryModel::OdometryModel(){
 }
 
 
-OdometryModel::OdometryModel(float w_){
+OdometryModel::OdometryModel(double w_){
     w = w_;
 }
 
-OdometryOut OdometryModel::calc(float dt, float dl, float dr){
+OdometryOut OdometryModel::calc(double dt, double dl, double dr){
     OdometryOut out;
     Dr = dr;
     Dl = dl;
@@ -85,7 +85,7 @@ OdometryOut OdometryModel::calc(float dt, float dl, float dr){
 }
 
 
-void OdometryModel::set(float x_, float y_, float o_){
+void OdometryModel::set(double x_, double y_, double o_){
     x = x_;
     y = y_;
     o = o_;
