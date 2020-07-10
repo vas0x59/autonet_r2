@@ -12,7 +12,7 @@
      \/__/         \/__/                       \/__/         \/__/         \/__/  by Vasily Yuryev
 
  Robot lane recogintion system
- Python version: https://github.com/vas0x59/autonet_r1/blob/master/src/lane_detector/reg_line1.py
+ Python version: https://github.com/vas0x59/autonet_r1/blob/master/src/lane_detector/reg_line1_oneL.py
 
  */
 
@@ -58,15 +58,20 @@ struct LaneDetectorOut {
     cv::Point2i p2;
     cv::Point2i stop_line;
     bool stop_line_bool;
+    bool success = false;
 };
 
 
 class LaneDetector {
 public:
-    LaneDetector(LaneDetectorParams params);
+    LaneDetector();
 //    LaneDetector();
+    void setParameters(LaneDetectorParams params);
+    LaneDetectorOut detect(cv::Mat image_in, cv::Mat &image_out);
 private:
+    void draw_roi(cv::Mat &image_out);
     LaneDetectorParams params_;
+    bool has_params_ = false;
 };
 
 

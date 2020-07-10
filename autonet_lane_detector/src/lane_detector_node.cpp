@@ -1,6 +1,20 @@
-//
-// Created by vasily on 10.07.2020.
-//
+/*
+      ___           ___           ___           ___           ___           ___           ___
+     /\  \         /\__\         /\  \         /\  \         /\__\         /\  \         /\  \
+    /::\  \       /:/  /         \:\  \       /::\  \       /::|  |       /::\  \        \:\  \
+   /:/\:\  \     /:/  /           \:\  \     /:/\:\  \     /:|:|  |      /:/\:\  \        \:\  \
+  /::\~\:\  \   /:/  /  ___       /::\  \   /:/  \:\  \   /:/|:|  |__   /::\~\:\  \       /::\  \
+ /:/\:\ \:\__\ /:/__/  /\__\     /:/\:\__\ /:/__/ \:\__\ /:/ |:| /\__\ /:/\:\ \:\__\     /:/\:\__\
+ \/__\:\/:/  / \:\  \ /:/  /    /:/  \/__/ \:\  \ /:/  / \/__|:|/:/  / \:\~\:\ \/__/    /:/  \/__/
+      \::/  /   \:\  /:/  /    /:/  /       \:\  /:/  /      |:/:/  /   \:\ \:\__\     /:/  /
+      /:/  /     \:\/:/  /     \/__/         \:\/:/  /       |::/  /     \:\ \/__/     \/__/
+     /:/  /       \::/  /                     \::/  /        /:/  /       \:\__\              2020
+     \/__/         \/__/                       \/__/         \/__/         \/__/  by Vasily Yuryev
+
+ Robot lane recogintion system
+
+ */
+
 #include <cmath>
 #include <memory>
 #include <vector>
@@ -60,12 +74,12 @@ private:
     image_transport::Publisher debug_pub_;
     image_transport::CameraSubscriber img_sub_;
     ros::Publisher markers_pub_, vis_markers_pub_;
-    ros::Subscriber map_markers_sub_;
     Mat camera_matrix_, dist_coeffs_;
     LaneDetectorNodeParams params_;
     ros::NodeHandle nh_;
     ros::NodeHandle nh_priv_ = ros::NodeHandle("~");
     bool first_time = true;
+    LaneDetector ldetector;
 public:
     void onInit() {
         ROS_INFO("LaneDetectorNode");
@@ -167,6 +181,7 @@ private:
         cv::projectPoints(points_local, vec, vec, camera_matrix_, dist_coeffs_, points_img);
         params_.detector_p.lane_setpoint = points_img[0];
         params_.detector_p.stop_line_setpoint = points_img[1];
+        ldetector.setParameters(params_.detector_p);
     }
     void imageCallback(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr &cinfo)
     {
@@ -178,6 +193,7 @@ private:
             Mat image = cv_bridge::toCvShare(msg, "bgr8")->image;
             Mat out_image = image.clone();
 
+            ldetector.detect(image, out_image);
 
             cv_bridge::CvImage out_msg;
             out_msg.header.frame_id = msg->header.frame_id;
