@@ -165,12 +165,12 @@ int main(int argc, char **argv) {
                                        << frame_name << " base_frame_name: " << base_frame_name);
     last_time = ros::Time::now();
     odom_calc = OdometryModel(robot_W);
-    motor1 = nh.advertise<std_msgs::Float32>("/motor1", 5);
-    motor2 = nh.advertise<std_msgs::Float32>("/motor2", 5);
-    odom_pub = nh.advertise<nav_msgs::Odometry>("/odom", 5);
-    ros::Subscriber cmd_vel_sub = nh.subscribe("/cmd_vel", 5, cmd_vel_clb);
-    ros::Subscriber enc1_sub = nh.subscribe("/encoder1", 5, m1tv_clb);
-    ros::Subscriber enc2_sub = nh.subscribe("/encoder2", 5, m2tv_clb);
+    motor1 = nh.advertise<std_msgs::Float32>("/motor1", 2);
+    motor2 = nh.advertise<std_msgs::Float32>("/motor2", 2);
+    odom_pub = nh.advertise<nav_msgs::Odometry>("/odom", 2);
+    ros::Subscriber cmd_vel_sub = nh.subscribe("/cmd_vel", 2, cmd_vel_clb);
+    ros::Subscriber enc1_sub = nh.subscribe("/encoder1", 2, m1tv_clb);
+    ros::Subscriber enc2_sub = nh.subscribe("/encoder2", 2, m2tv_clb);
 
     ros::Rate r(update_rate); // 10 hz
     while (ros::ok()) {
