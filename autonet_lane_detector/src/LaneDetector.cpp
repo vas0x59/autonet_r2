@@ -42,6 +42,6 @@ LaneDetectorOut LaneDetector::detect(cv::Mat image_in, cv::Mat &image_out) {
 }
 
 void LaneDetector::draw_roi(cv::Mat &image_out) {
-    cv::polylines(image_out, params_.lane_roi, true, cv::Scalar(0, 255, 0));
+    cv::polylines(image_out, params_.lane_roi, true, cv::Scalar(0, 240, 0), 3);
 }
 

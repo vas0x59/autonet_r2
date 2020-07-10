@@ -47,7 +47,7 @@ struct LaneDetectorParams {
     int thresh_val;
     vector<cv::Point2i> lane_roi;
     cv::Point2i  lane_setpoint;
-    vector<cv::Point2i> stop_line_roi;
+//    vector<cv::Point2f> stop_line_roi;
     cv::Point2i  stop_line_setpoint;
 };
 
