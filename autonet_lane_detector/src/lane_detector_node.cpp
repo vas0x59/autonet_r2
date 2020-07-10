@@ -39,6 +39,7 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/Polygon.h>
+#include <geometry_msgs/PolygonStamped.h>
 #include <geometry_msgs/Point32.h>
 #include <geometry_msgs/Point.h>
 #include <visualization_msgs/Marker.h>
@@ -66,25 +67,26 @@ struct LaneDetectorNodeParams {
     LaneDetectorParams detector_p;
 };
 
-class LaneDetectorNode{
+class LaneDetectorNode {
 private:
     std::unique_ptr<tf2_ros::TransformBroadcaster> br_;
     std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
     std::unique_ptr<tf2_ros::TransformListener> tf_listener_;
     image_transport::Publisher debug_pub_;
     image_transport::CameraSubscriber img_sub_;
-    ros::Publisher markers_pub_, vis_markers_pub_;
+    ros::Publisher lane_roi_pub_, vis_markers_pub_;
     Mat camera_matrix_, dist_coeffs_;
     LaneDetectorNodeParams params_;
     ros::NodeHandle nh_;
     ros::NodeHandle nh_priv_ = ros::NodeHandle("~");
     bool first_time = true;
+    bool has_parameters = false;
     LaneDetector ldetector;
 public:
     void onInit() {
         ROS_INFO("LaneDetectorNode");
 //        nh_priv_ = ros::NodeHandle("~");
-
+        lane_roi_pub_ = nh_.advertise<geometry_msgs::PolygonStamped>("/lane_detector/lane_roi", 2);
         br_ = std::make_unique<tf2_ros::TransformBroadcaster>();
         tf_buffer_ = std::make_unique<tf2_ros::Buffer>();
         tf_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_, nh_);
@@ -92,13 +94,26 @@ public:
         image_transport::ImageTransport it(nh_);
 //        image_transport::ImageTransport it_priv(nh_priv_);
         img_sub_ = it.subscribeCamera("image_raw", 1, &LaneDetectorNode::imageCallback, this);
-        debug_pub_ = it.advertise("debug", 1);
+        debug_pub_ = it.advertise("/lane_detector/debug", 1);
+
+        camera_matrix_ = cv::Mat::zeros(3, 3, CV_64F);
         getParameters();
-        projectCoordinates();
+//        projectCoordinates();
 
     }
+
 private:
-    void getParameters(){
+    void pubLaneROI() {
+        if (has_parameters && lane_roi_pub_.getNumSubscribers() > 0) {
+            geometry_msgs::PolygonStamped polygon;
+            polygon.header.frame_id = params_.lane_roi_frame;
+            polygon.header.stamp = ros::Time::now();
+            polygon.polygon = params_.lane_roi;
+            lane_roi_pub_.publish(polygon);
+        }
+    }
+
+    void getParameters() {
         std::vector<std::string> keys;
         nh_priv_.param("lane_roi_frame", params_.lane_roi_frame, string("base_link"));
         nh_priv_.param("camera_frame", params_.camera_frame, string("camera_frame"));
@@ -109,23 +124,21 @@ private:
 
         XmlRpc::XmlRpcValue xml_lane_roi_temp;
         nh_priv_.getParam("lane_roi", xml_lane_roi_temp);
-        if( xml_lane_roi_temp.getType() != XmlRpc::XmlRpcValue::TypeArray ) {
+        if (xml_lane_roi_temp.getType() != XmlRpc::XmlRpcValue::TypeArray) {
             ROS_ERROR("param 'xml_lane_roi_temp' is not a list");
         } else {
-            for( int i=0; i<xml_lane_roi_temp.size(); ++i ) {
-                if( xml_lane_roi_temp[i].getType() != XmlRpc::XmlRpcValue::TypeArray ) {
+            for (int i = 0; i < xml_lane_roi_temp.size(); ++i) {
+                if (xml_lane_roi_temp[i].getType() != XmlRpc::XmlRpcValue::TypeArray) {
                     ROS_ERROR("xml_lane_roi_temp[%d] is not a list", i);
                 } else {
-                    if( xml_lane_roi_temp[i].size() != 3 ) {
+                    if (xml_lane_roi_temp[i].size() != 3) {
                         ROS_ERROR("xml_lane_roi_temp[%d] size not 3 ", i);
-                    }
-                    else if(
+                    } else if (
                             xml_lane_roi_temp[i][0].getType() != XmlRpc::XmlRpcValue::TypeDouble ||
                             xml_lane_roi_temp[i][1].getType() != XmlRpc::XmlRpcValue::TypeDouble ||
-                            xml_lane_roi_temp[i][2].getType() != XmlRpc::XmlRpcValue::TypeDouble ){
+                            xml_lane_roi_temp[i][2].getType() != XmlRpc::XmlRpcValue::TypeDouble) {
                         ROS_ERROR("xml_lane_roi_temp[%d] is not double", i);
-                    }
-                    else {
+                    } else {
                         geometry_msgs::Point32 pnt;
 
                         pnt.x = static_cast<double>(xml_lane_roi_temp[i][0]);
@@ -147,13 +160,20 @@ private:
         params_.stop_setpoint.x = stop_setpoint_t[0];
         params_.stop_setpoint.y = stop_setpoint_t[1];
         params_.stop_setpoint.z = stop_setpoint_t[2];
+        has_parameters = true;
+        cout << "has_parameters" << endl;
 
     }
-    void projectCoordinates(){
-        geometry_msgs::TransformStamped transform = tf_buffer_->lookupTransform(params_.camera_frame, params_.lane_roi_frame, ros::Time(0), ros::Duration(0.5));
+
+    void projectCoordinates() {
+        cout << params_.camera_frame << " " << params_.lane_roi_frame << endl;
+        geometry_msgs::TransformStamped transform = tf_buffer_->lookupTransform(params_.camera_frame,
+                                                                                params_.lane_roi_frame, ros::Time(0),
+                                                                                ros::Duration(0.5));
         params_.detector_p.lane_roi = vector<cv::Point2i>(params_.lane_roi.points.size());
         vector<cv::Point3f> lane_roi_points_local(params_.lane_roi.points.size());
-        for (int i = 0; i < params_.lane_roi.points.size(); i++){
+        vector<cv::Point2f> lane_roi_points_img(params_.lane_roi.points.size());
+        for (int i = 0; i < params_.lane_roi.points.size(); i++) {
             geometry_msgs::Point pnt_local;
             geometry_msgs::Point pnt_nlocal;
             pnt_nlocal.x = params_.lane_roi.points[i].x;
@@ -164,12 +184,16 @@ private:
             lane_roi_points_local[i].y = pnt_local.y;
             lane_roi_points_local[i].z = pnt_local.z;
         }
+//        cout << "projectPoints" << endl;
         cv::Vec3f vec(0, 0, 0);
-        cv::projectPoints(lane_roi_points_local, vec, vec, camera_matrix_, dist_coeffs_, params_.detector_p.lane_roi);
+        cv::projectPoints(lane_roi_points_local, vec, vec, camera_matrix_, dist_coeffs_, lane_roi_points_img);
+
+        for (int i = 0; i < lane_roi_points_img.size(); i++)
+            params_.detector_p.lane_roi[i] = cv::Point2i(lane_roi_points_img[i]);
 
         geometry_msgs::Point pnt_local;
         vector<cv::Point3f> points_local(2);
-        vector<cv::Point2i> points_img(2);
+        vector<cv::Point2f> points_img(2);
         tf2::doTransform(params_.lane_setpoint, pnt_local, transform);
         points_local[0].x = pnt_local.x;
         points_local[0].y = pnt_local.y;
@@ -179,17 +203,20 @@ private:
         points_local[1].y = pnt_local.y;
         points_local[1].z = pnt_local.z;
         cv::projectPoints(points_local, vec, vec, camera_matrix_, dist_coeffs_, points_img);
-        params_.detector_p.lane_setpoint = points_img[0];
-        params_.detector_p.stop_line_setpoint = points_img[1];
+        params_.detector_p.lane_setpoint = cv::Point2i(points_img[0]);
+        params_.detector_p.stop_line_setpoint = cv::Point2i(points_img[1]);
         ldetector.setParameters(params_.detector_p);
     }
-    void imageCallback(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr &cinfo)
-    {
+
+    void imageCallback(const sensor_msgs::ImageConstPtr &msg, const sensor_msgs::CameraInfoConstPtr &cinfo) {
+//        cout << "parseCameraInfo" << endl;
         parseCameraInfo(cinfo, camera_matrix_, dist_coeffs_);
-        if (first_time){
+        if (first_time) {
+//            cout << "first time" << endl;
             projectCoordinates();
-        }
-        else {
+            first_time = false;
+        } else {
+//            cout << "IMAGE" << endl;
             Mat image = cv_bridge::toCvShare(msg, "bgr8")->image;
             Mat out_image = image.clone();
 
@@ -202,8 +229,8 @@ private:
             out_msg.image = out_image;
 
             debug_pub_.publish(out_msg.toImageMsg());
+            pubLaneROI();
         }
-
     }
 };
 
