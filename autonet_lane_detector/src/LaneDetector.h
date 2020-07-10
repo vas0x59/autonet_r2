@@ -11,7 +11,7 @@
      /:/  /       \::/  /                     \::/  /        /:/  /       \:\__\              2020
      \/__/         \/__/                       \/__/         \/__/         \/__/  by Vasily Yuryev
 
- Robot lane recogintion system
+ Robot lane recognition system
  Python version: https://github.com/vas0x59/autonet_r1/blob/master/src/lane_detector/reg_line1_oneL.py
 
  */
@@ -45,7 +45,9 @@ struct LaneDetectorParams {
     int window_count;
     int window_thresh;
     int thresh_val;
-    vector<cv::Point2i> lane_roi;
+    int image_w;
+    int image_h;
+    vector<cv::Point2f> lane_roi;
     cv::Point2i  lane_setpoint;
 //    vector<cv::Point2f> stop_line_roi;
     cv::Point2i  stop_line_setpoint;
@@ -70,7 +72,11 @@ public:
     LaneDetectorOut detect(cv::Mat image_in, cv::Mat &image_out);
 private:
     void draw_roi(cv::Mat &image_out);
+    void draw_points(cv::Mat &image_out);
+    vector<cv::Point2f> gen_dst(int w, int h);
+    vector<cv::Point2f> sort_src(vector<cv::Point2f> src, int w, int h);
     LaneDetectorParams params_;
+    void detect_(cv::Mat image_in);
     bool has_params_ = false;
 };
 

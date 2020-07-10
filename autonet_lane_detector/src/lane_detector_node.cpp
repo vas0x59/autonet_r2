@@ -11,7 +11,7 @@
      /:/  /       \::/  /                     \::/  /        /:/  /       \:\__\              2020
      \/__/         \/__/                       \/__/         \/__/         \/__/  by Vasily Yuryev
 
- Robot lane recogintion system
+ Robot lane recognition system
 
  */
 
@@ -126,7 +126,11 @@ private:
         nh_priv_.getParam("lane_roi", xml_lane_roi_temp);
         if (xml_lane_roi_temp.getType() != XmlRpc::XmlRpcValue::TypeArray) {
             ROS_ERROR("param 'xml_lane_roi_temp' is not a list");
-        } else {
+        }
+        else if (xml_lane_roi_temp.size() != 4){
+            ROS_ERROR("len of  'xml_lane_roi_temp' is not 4");
+        }
+        else {
             for (int i = 0; i < xml_lane_roi_temp.size(); ++i) {
                 if (xml_lane_roi_temp[i].getType() != XmlRpc::XmlRpcValue::TypeArray) {
                     ROS_ERROR("xml_lane_roi_temp[%d] is not a list", i);
@@ -170,9 +174,9 @@ private:
         geometry_msgs::TransformStamped transform = tf_buffer_->lookupTransform(params_.camera_frame,
                                                                                 params_.lane_roi_frame, ros::Time(0),
                                                                                 ros::Duration(0.5));
-        params_.detector_p.lane_roi = vector<cv::Point2i>(params_.lane_roi.points.size());
+        params_.detector_p.lane_roi = vector<cv::Point2f>(params_.lane_roi.points.size());
         vector<cv::Point3f> lane_roi_points_local(params_.lane_roi.points.size());
-        vector<cv::Point2f> lane_roi_points_img(params_.lane_roi.points.size());
+//        vector<cv::Point2f> lane_roi_points_img(params_.lane_roi.points.size());
         for (int i = 0; i < params_.lane_roi.points.size(); i++) {
             geometry_msgs::Point pnt_local;
             geometry_msgs::Point pnt_nlocal;
@@ -186,10 +190,10 @@ private:
         }
 //        cout << "projectPoints" << endl;
         cv::Vec3f vec(0, 0, 0);
-        cv::projectPoints(lane_roi_points_local, vec, vec, camera_matrix_, dist_coeffs_, lane_roi_points_img);
+        cv::projectPoints(lane_roi_points_local, vec, vec, camera_matrix_, dist_coeffs_, params_.detector_p.lane_roi);
 
-        for (int i = 0; i < lane_roi_points_img.size(); i++)
-            params_.detector_p.lane_roi[i] = cv::Point2i(lane_roi_points_img[i]);
+//        for (int i = 0; i < lane_roi_points_img.size(); i++)
+//            params_.detector_p.lane_roi[i] = cv::Point2i(lane_roi_points_img[i]);
 
         geometry_msgs::Point pnt_local;
         vector<cv::Point3f> points_local(2);
@@ -213,6 +217,8 @@ private:
         parseCameraInfo(cinfo, camera_matrix_, dist_coeffs_);
         if (first_time) {
 //            cout << "first time" << endl;
+            params_.detector_p.image_w = msg->width;
+            params_.detector_p.image_h = msg->height;
             projectCoordinates();
             first_time = false;
         } else {

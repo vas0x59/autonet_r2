@@ -1,7 +1,7 @@
 lane_roi: [[0.15, 0.0, 0.0], [0.3, 0.0, 0.0], [0.3, -0.3, 0.0], [0.15, -0.3, 0.0]]
 lane_roi_frame: 'base_link_footprint'
 camera_frame: 'camera1_link_optical'
-lane_setpoint:  [0.15, -0.15, 0.0]
+lane_setpoint:  [0.25, -0.2, 0.0]
 stop_setpoint:  [0.15, 0.0, 0.0]
 window_size:  60
 window_count: 8
