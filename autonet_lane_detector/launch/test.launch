@@ -1,5 +1,7 @@
 <launch>
     <node pkg="autonet_lane_detector" type="lane_detector" name="autonet_lane_detector" output="screen">
         <rosparam file="$(find autonet_lane_detector)/param/test.yaml" command="load"/>
+        <remap from="image_raw" to="camera1/image_raw"/>
+        <remap from="camera_info" to="camera1/camera_info"/>
     </node>
 </launch>
