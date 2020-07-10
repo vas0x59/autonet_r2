@@ -140,8 +140,12 @@ private:
         params_.detector_p.lane_roi = vector<cv::Point2i>(params_.lane_roi.points.size());
         vector<cv::Point3f> lane_roi_points_local(params_.lane_roi.points.size());
         for (int i = 0; i < params_.lane_roi.points.size(); i++){
-            geometry_msgs::Point32 pnt_local;
-            tf2::doTransform(params_.lane_roi.points[i], pnt_local, transform);
+            geometry_msgs::Point pnt_local;
+            geometry_msgs::Point pnt_nlocal;
+            pnt_nlocal.x = params_.lane_roi.points[i].x;
+            pnt_nlocal.y = params_.lane_roi.points[i].y;
+            pnt_nlocal.z = params_.lane_roi.points[i].z;
+            tf2::doTransform(pnt_nlocal, pnt_local, transform);
             lane_roi_points_local[i].x = pnt_local.x;
             lane_roi_points_local[i].y = pnt_local.y;
             lane_roi_points_local[i].z = pnt_local.z;
