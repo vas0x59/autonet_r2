@@ -65,6 +65,7 @@ private:
     LaneDetectorNodeParams params_;
     ros::NodeHandle nh_;
     ros::NodeHandle nh_priv_ = ros::NodeHandle("~");
+    bool first_time = true;
 public:
     void onInit() {
         ROS_INFO("LaneDetectorNode");
@@ -135,24 +136,54 @@ private:
 
     }
     void projectCoordinates(){
+        geometry_msgs::TransformStamped transform = tf_buffer_->lookupTransform(params_.camera_frame, params_.lane_roi_frame, ros::Time(0), ros::Duration(0.5));
+        params_.detector_p.lane_roi = vector<cv::Point2i>(params_.lane_roi.points.size());
+        vector<cv::Point3f> lane_roi_points_local(params_.lane_roi.points.size());
+        for (int i = 0; i < params_.lane_roi.points.size(); i++){
+            geometry_msgs::Point32 pnt_local;
+            tf2::doTransform(params_.lane_roi.points[i], pnt_local, transform);
+            lane_roi_points_local[i].x = pnt_local.x;
+            lane_roi_points_local[i].y = pnt_local.y;
+            lane_roi_points_local[i].z = pnt_local.z;
+        }
+        cv::Vec3f vec(0, 0, 0);
+        cv::projectPoints(lane_roi_points_local, vec, vec, camera_matrix_, dist_coeffs_, params_.detector_p.lane_roi);
 
+        geometry_msgs::Point pnt_local;
+        vector<cv::Point3f> points_local(2);
+        vector<cv::Point2i> points_img(2);
+        tf2::doTransform(params_.lane_setpoint, pnt_local, transform);
+        points_local[0].x = pnt_local.x;
+        points_local[0].y = pnt_local.y;
+        points_local[0].z = pnt_local.z;
+        tf2::doTransform(params_.stop_setpoint, pnt_local, transform);
+        points_local[1].x = pnt_local.x;
+        points_local[1].y = pnt_local.y;
+        points_local[1].z = pnt_local.z;
+        cv::projectPoints(points_local, vec, vec, camera_matrix_, dist_coeffs_, points_img);
+        params_.detector_p.lane_setpoint = points_img[0];
+        params_.detector_p.stop_line_setpoint = points_img[1];
     }
     void imageCallback(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr &cinfo)
     {
         parseCameraInfo(cinfo, camera_matrix_, dist_coeffs_);
-        Mat image = cv_bridge::toCvShare(msg, "bgr8")->image;
-        Mat out_image = image.clone();
+        if (first_time){
+            projectCoordinates();
+        }
+        else {
+            Mat image = cv_bridge::toCvShare(msg, "bgr8")->image;
+            Mat out_image = image.clone();
 
 
+            cv_bridge::CvImage out_msg;
+            out_msg.header.frame_id = msg->header.frame_id;
+            out_msg.header.stamp = msg->header.stamp;
+            out_msg.encoding = sensor_msgs::image_encodings::BGR8;
+            out_msg.image = out_image;
 
+            debug_pub_.publish(out_msg.toImageMsg());
+        }
 
-        cv_bridge::CvImage out_msg;
-        out_msg.header.frame_id = msg->header.frame_id;
-        out_msg.header.stamp = msg->header.stamp;
-        out_msg.encoding = sensor_msgs::image_encodings::BGR8;
-        out_msg.image = out_image;
-
-        debug_pub_.publish(out_msg.toImageMsg());
     }
 };
 
