@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="autonet_lane_detector" type="lane_detector" name="autonet_lane_detector" output="screen">
+        <rosparam file="$(find autonet_lane_detector)/param/test.yaml" command="load"/>
+    </node>
+</launch>
