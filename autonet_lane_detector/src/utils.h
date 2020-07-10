@@ -1,6 +1,16 @@
 //
 // Created by vasily on 10.07.2020.
 //
+#pragma once
+
+#include <cmath>
+#include <ros/ros.h>
+#include <tf/transform_datatypes.h>
+#include <geometry_msgs/Quaternion.h>
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/Vector3.h>
+#include <sensor_msgs/CameraInfo.h>
+#include <opencv2/opencv.hpp>
 
 #ifndef SRC_UTILS_H
 #define SRC_UTILS_H
