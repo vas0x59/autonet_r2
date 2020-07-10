@@ -122,14 +122,16 @@ private:
             }
         }
         cout << params_.lane_roi << endl;
-//        nh_priv_.param("lane_roi", lane_roi_temp);
-//        for (int i = 0; i < lane_roi_temp.size(); i++){
-//            geometry_msgs::Point32 pnt;
-//            pnt.x = lane_roi_temp[i][0];
-//            pnt.y = lane_roi_temp[i][1];
-//            pnt.z = lane_roi_temp[i][2];
-//            params_.lane_roi.points.push_back(pnt);
-//        }
+        vector<double> lane_setpoint_t;
+        nh_priv_.getParam("lane_setpoint", lane_setpoint_t);
+        params_.lane_setpoint.x = lane_setpoint_t[0];
+        params_.lane_setpoint.y = lane_setpoint_t[1];
+        params_.lane_setpoint.z = lane_setpoint_t[2];
+        vector<double> stop_setpoint_t;
+        nh_priv_.getParam("stop_setpoint", stop_setpoint_t);
+        params_.stop_setpoint.x = stop_setpoint_t[0];
+        params_.stop_setpoint.y = stop_setpoint_t[1];
+        params_.stop_setpoint.z = stop_setpoint_t[2];
 
     }
     void projectCoordinates(){
