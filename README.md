@@ -21,3 +21,4 @@ Autonet Rewrite code to C++
  - [x] odometry
  - [ ] lanes detector
  - [ ] navigation
+ - [ ] visualisation  
