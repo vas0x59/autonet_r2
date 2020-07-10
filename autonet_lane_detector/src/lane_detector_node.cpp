@@ -207,8 +207,8 @@ private:
         points_local[1].y = pnt_local.y;
         points_local[1].z = pnt_local.z;
         cv::projectPoints(points_local, vec, vec, camera_matrix_, dist_coeffs_, points_img);
-        params_.detector_p.lane_setpoint = cv::Point2i(points_img[0]);
-        params_.detector_p.stop_line_setpoint = cv::Point2i(points_img[1]);
+        params_.detector_p.lane_setpoint = points_img[0];
+        params_.detector_p.stop_line_setpoint = points_img[1];
         ldetector.setParameters(params_.detector_p);
     }
 
@@ -225,9 +225,10 @@ private:
 //            cout << "IMAGE" << endl;
             Mat image = cv_bridge::toCvShare(msg, "bgr8")->image;
             Mat out_image = image.clone();
-
+            ros::Time st_t = ros::Time::now();
             ldetector.detect(image, out_image);
-
+            ros::Time st_t2 = ros::Time::now();
+            cout << (st_t2 - st_t).toNSec() / 1000 / 1000 << endl;
             cv_bridge::CvImage out_msg;
             out_msg.header.frame_id = msg->header.frame_id;
             out_msg.header.stamp = msg->header.stamp;

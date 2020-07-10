@@ -48,9 +48,9 @@ struct LaneDetectorParams {
     int image_w;
     int image_h;
     vector<cv::Point2f> lane_roi;
-    cv::Point2i  lane_setpoint;
+    cv::Point2f  lane_setpoint;
 //    vector<cv::Point2f> stop_line_roi;
-    cv::Point2i  stop_line_setpoint;
+    cv::Point2f  stop_line_setpoint;
 };
 
 struct LaneDetectorOut {
