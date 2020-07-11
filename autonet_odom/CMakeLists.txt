@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   std_msgs
-  tf2 tf2_ros message_generation
+  tf2 tf2_ros message_generation tf2_geometry_msgs
 )
 # find_package( OpenCV REQUIRED )
 

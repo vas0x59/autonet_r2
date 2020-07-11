@@ -60,6 +60,7 @@
   <build_depend>geometry_msgs</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>tf2</build_depend>
+  <build_depend>tf2_geometry_msgs</build_depend>
   <exec_depend>cv_birdge</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
   <exec_depend>roscpp</exec_depend>
@@ -69,6 +70,7 @@
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>tf</exec_depend>
   <exec_depend>tf2</exec_depend>
+  <exec_depend>tf2_geometry_msgs</exec_depend>
 <!-- <exec_depend>autonet_r1</exec_depend> -->
 
   <!-- The export tag contains other, unspecified, tags -->
