@@ -19,6 +19,6 @@ Autonet Rewrite code to C++
 
 ### Roadmap To Cpp
  - [x] odometry
- - [ ] lanes detector
+ - [x] lanes detector
  - [ ] navigation
  - [ ] visualisation  

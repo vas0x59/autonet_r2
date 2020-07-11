@@ -56,10 +56,11 @@ struct LaneDetectorParams {
 };
 
 struct LaneDetectorOut {
-//    float e1;
+    float err_x_img_flat;
+    float err_diff_x_img_flat;
 //    float e2;
     vector<cv::Point2f> points_img_flat;
-    vector<cv::Point2f> points_img_flat_norm;
+    vector<cv::Point2f> points_img_norm;
     vector<cv::Point2f> points_img;
 //    vector<cv::Point2f> points_img_norm;
 //    vector<cv::Point2f> line_points_img_flat

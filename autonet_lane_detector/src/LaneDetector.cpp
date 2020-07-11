@@ -184,9 +184,9 @@ LaneDetectorOut LaneDetector::detect_(cv::Mat image_in_or, cv::Mat &image_out, c
 
     vector<cv::Point2f> itog_points_solve(3);
 //    itog_points_solve[0]
-    float vect_A = atan2(line[1], line[0]);
-    cv::Point2f p2 = cv::Point2f(line[2] + cos(vect_A) * 10, line[3] + sin(vect_A) * 10);
-    cv::Point2f p1 = cv::Point2f(line[2] - cos(vect_A) * 10, line[3] - sin(vect_A) * 10);
+    float vect_A = atan2(itog_points[0].y - itog_points[2].y, itog_points[0].x - itog_points[2].x);
+    cv::Point2f p2 = cv::Point2f(line[2] + cos(vect_A) * (filtered.cols / 2), line[3] + sin(vect_A) * (filtered.cols / 2));
+    cv::Point2f p1 = cv::Point2f(line[2] - cos(vect_A) * (filtered.cols / 2), line[3] - sin(vect_A) * (filtered.cols / 2));
     if (p2.y > p1.y)
         itog_points_solve[2] = p2;
     else
@@ -204,10 +204,14 @@ LaneDetectorOut LaneDetector::detect_(cv::Mat image_in_or, cv::Mat &image_out, c
     cv::perspectiveTransform(itog_points, itog_unwarp, per_transform_inv);
     draw_line_points(image_out, itog_unwarp, cv::Scalar(0, 0, 255));
     cv::circle(image_out, cv::Point2i(itog_unwarp[0]), 5, cv::Scalar(0, 150, 80), -1);
+    vector<cv::Point2f> itog_points_solve_unwrap(3);
+    cv::perspectiveTransform(itog_points_solve, itog_points_solve_unwrap, per_transform_inv);
     out.angle = vect_A;
     out.points_img_flat = itog_points;
     out.points_img = itog_unwarp;
-    out.points_img_flat_norm = itog_points_solve;
+    out.points_img_norm = itog_points_solve_unwrap;
+    out.err_x_img_flat = (set_point_warped[0].x - itog_points[1].x) / float(filtered.cols / 2);
+    out.err_diff_x_img_flat = (itog_points[2].x - itog_points[0].x) / float(filtered.cols / 2);
     return out;
 }
 

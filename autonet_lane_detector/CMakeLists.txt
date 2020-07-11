@@ -29,7 +29,10 @@ add_message_files(
         LaneRes.msg
 )
 
-generate_messages()
+generate_messages(
+        DEPENDENCIES
+        geometry_msgs
+)
 
 catkin_package(
         #  INCLUDE_DIRS include
