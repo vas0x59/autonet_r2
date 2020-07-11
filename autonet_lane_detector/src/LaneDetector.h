@@ -12,7 +12,6 @@
      \/__/         \/__/                       \/__/         \/__/         \/__/  by Vasily Yuryev
 
  Robot lane recognition system
- Python version: https://github.com/vas0x59/autonet_r1/blob/master/src/lane_detector/reg_line1_oneL.py
 
  */
 
@@ -57,13 +56,18 @@ struct LaneDetectorParams {
 };
 
 struct LaneDetectorOut {
-    float e1;
-    float e2;
-    cv::Point2i p1;
-    cv::Point2i p2;
+//    float e1;
+//    float e2;
+    vector<cv::Point2f> points_img_flat;
+    vector<cv::Point2f> points_img_flat_norm;
+    vector<cv::Point2f> points_img;
+//    vector<cv::Point2f> points_img_norm;
+//    vector<cv::Point2f> line_points_img_flat
+    float angle;
     cv::Point2i stop_line;
     bool stop_line_bool;
     bool success = false;
+
 };
 
 
@@ -72,15 +76,15 @@ public:
     LaneDetector();
 //    LaneDetector();
     void setParameters(LaneDetectorParams params);
-    LaneDetectorOut detect(cv::Mat image_in, cv::Mat &image_out);
+    LaneDetectorOut detect(cv::Mat image_in, cv::Mat &image_out, cv::Mat cameraMatrix, cv::Mat distCoeffs);
 private:
     void draw_roi(cv::Mat &image_out);
     void draw_points(cv::Mat &image_out);
     vector<cv::Point2f> gen_dst(int w, int h, float size_red);
     vector<cv::Point2f> sort_src(vector<cv::Point2f> src, int w, int h);
     LaneDetectorParams params_;
-    void detect_(cv::Mat image_in, vector<cv::Point2f> &window_means_out);
-    void draw_line_points(cv::Mat &image_out, vector<cv::Point2f> points);
+    LaneDetectorOut detect_(cv::Mat image_in_or, cv::Mat &image_out, cv::Mat cameraMatrix, cv::Mat distCoeffs);
+    void draw_line_points(cv::Mat &image_out, vector<cv::Point2f> points, cv::Scalar color) ;
     bool has_params_ = false;
     float size_red_ = 0.3;
 };
