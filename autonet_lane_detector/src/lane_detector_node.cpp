@@ -253,7 +253,7 @@ private:
 //    }
 
     void imageCallback(const sensor_msgs::ImageConstPtr &msg, const sensor_msgs::CameraInfoConstPtr &cinfo) {
-//        cout << "parseCameraInfo" << endl;
+        cout << "parseCameraInfo" << endl;
         parseCameraInfo(cinfo, camera_matrix_, dist_coeffs_);
         if (first_time) {
 //            cout << "first time" << endl;
