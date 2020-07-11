@@ -20,8 +20,11 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
-
-
+#include <vector>
+#include <numeric>
+#include <string>
+#include <functional>
+//#include "al
 #ifndef SRC_LANEDETECTOR_H
 #define SRC_LANEDETECTOR_H
 
@@ -73,11 +76,13 @@ public:
 private:
     void draw_roi(cv::Mat &image_out);
     void draw_points(cv::Mat &image_out);
-    vector<cv::Point2f> gen_dst(int w, int h);
+    vector<cv::Point2f> gen_dst(int w, int h, float size_red);
     vector<cv::Point2f> sort_src(vector<cv::Point2f> src, int w, int h);
     LaneDetectorParams params_;
-    void detect_(cv::Mat image_in);
+    void detect_(cv::Mat image_in, vector<cv::Point2f> &window_means_out);
+    void draw_line_points(cv::Mat &image_out, vector<cv::Point2f> points);
     bool has_params_ = false;
+    float size_red_ = 0.3;
 };
 
 
