@@ -55,6 +55,8 @@
 #include "LaneDetector.h"
 #include "utils.h"
 
+#include <autonet_lane_detector/LaneRes.h>
+
 using cv::Mat;
 using namespace std;
 
@@ -74,7 +76,7 @@ private:
     std::unique_ptr<tf2_ros::TransformListener> tf_listener_;
     image_transport::Publisher debug_pub_;
     image_transport::CameraSubscriber img_sub_;
-    ros::Publisher lane_roi_pub_, vis_markers_pub_;
+    ros::Publisher lane_roi_pub_, lane_res_pub_;
     Mat camera_matrix_, dist_coeffs_;
     LaneDetectorNodeParams params_;
     ros::NodeHandle nh_;
@@ -87,6 +89,7 @@ public:
         ROS_INFO("LaneDetectorNode");
 //        nh_priv_ = ros::NodeHandle("~");
         lane_roi_pub_ = nh_.advertise<geometry_msgs::PolygonStamped>("/lane_detector/lane_roi", 2);
+        lane_res_pub_ = nh_.advertise<autonet_lane_detector::LaneRes>("/lane_detector/lane_res", 2);
         br_ = std::make_unique<tf2_ros::TransformBroadcaster>();
         tf_buffer_ = std::make_unique<tf2_ros::Buffer>();
         tf_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_, nh_);
@@ -212,6 +215,43 @@ private:
         ldetector.setParameters(params_.detector_p);
     }
 
+//    geometry_msgs::Point getLanePoint(LaneDetectorOut res){
+////        params_.lane_roi
+//        vector<cv::Point2f> roi_2d;
+//        for (auto pnt : params_.lane_roi.points){
+//            roi_2d.push_back(cv::Point2f(pnt.x*100, pnt.y*100));
+//        }
+//        cv::Rect rect = cv::boundingRect(roi_2d);
+//        float vect_l_w = max(rect.width, rect.height) / 100.0;
+//        vector<cv::Point3f> obj_points(3);
+//        obj_points[0] = cv::Point3f(vect_l_w / 2.0, 0, 0);
+//        obj_points[1] = cv::Point3f(0, 0, 0);
+//        obj_points[2] = cv::Point3f(-vect_l_w / 2.0, 0, 0);
+//        vector<cv::Point3f> tvecs, rvecs;
+//        cv::solveP3P(obj_points, res.points_img_norm, camera_matrix_, dist_coeffs_, rvecs, tvecs, cv::SOLVEPNP_P3P);
+//        for (int i = 0; i < tvecs.size(); i++){
+//            cout << "sol: " << i << " tvec: " << tvecs[i] << endl;
+//        }
+//        if (tvecs.size() > 0){
+//            tf2::Quaternion q;
+//            q.setRPY(0, 0, res.angle);
+//            cv::Point3f pnt = tvecs[0];
+//            geometry_msgs::TransformStamped transformStamped;
+//            transformStamped.header.stamp = ros::Time::now();
+//            transformStamped.header.frame_id = params_.camera_frame;
+//            transformStamped.child_frame_id = "lane_estimated";
+//            transformStamped.transform.translation.x = pnt.x;
+//            transformStamped.transform.translation.y = pnt.y;
+//            transformStamped.transform.translation.z = pnt.z;
+//            transformStamped.transform.rotation.x = q.x();
+//            transformStamped.transform.rotation.y = q.y();
+//            transformStamped.transform.rotation.z = q.z();
+//            transformStamped.transform.rotation.w = q.w();
+//            br_->sendTransform(transformStamped);
+//        }
+//
+//    }
+
     void imageCallback(const sensor_msgs::ImageConstPtr &msg, const sensor_msgs::CameraInfoConstPtr &cinfo) {
 //        cout << "parseCameraInfo" << endl;
         parseCameraInfo(cinfo, camera_matrix_, dist_coeffs_);
@@ -226,16 +266,26 @@ private:
             Mat image = cv_bridge::toCvShare(msg, "bgr8")->image;
             Mat out_image = image.clone();
             ros::Time st_t = ros::Time::now();
-            ldetector.detect(image, out_image);
+            LaneDetectorOut out = ldetector.detect(image, out_image, camera_matrix_, dist_coeffs_);
             ros::Time st_t2 = ros::Time::now();
-            cout << (st_t2 - st_t).toNSec() / 1000 / 1000 << endl;
-            cv_bridge::CvImage out_msg;
-            out_msg.header.frame_id = msg->header.frame_id;
-            out_msg.header.stamp = msg->header.stamp;
-            out_msg.encoding = sensor_msgs::image_encodings::BGR8;
-            out_msg.image = out_image;
+            cout << "Detector time: " << (st_t2 - st_t).toSec() * 1000 << endl;
 
-            debug_pub_.publish(out_msg.toImageMsg());
+            autonet_lane_detector::LaneRes res_msg;
+            res_msg.angle = out.angle;
+            res_msg.roi = params_.lane_roi.points;
+            res_msg.err_x_img_flat = out.err_x_img_flat;
+            res_msg.set_point = params_.lane_setpoint;
+            res_msg.set_point_frame = params_.lane_roi_frame;
+            res_msg.err_diff_x_img_flat = out.err_diff_x_img_flat;
+
+            cv_bridge::CvImage debug_msg;
+            debug_msg.header.frame_id = msg->header.frame_id;
+            debug_msg.header.stamp = msg->header.stamp;
+            debug_msg.encoding = sensor_msgs::image_encodings::BGR8;
+            debug_msg.image = out_image;
+
+            debug_pub_.publish(debug_msg.toImageMsg());
+            lane_res_pub_.publish(res_msg);
             pubLaneROI();
         }
     }
