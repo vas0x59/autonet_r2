@@ -75,14 +75,16 @@ private:
     std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
     std::unique_ptr<tf2_ros::TransformListener> tf_listener_;
     image_transport::Publisher debug_pub_;
-    image_transport::CameraSubscriber img_sub_;
+    image_transport::Subscriber img_sub_;
     ros::Publisher lane_roi_pub_, lane_res_pub_;
+    ros::Subscriber cam_info_sub_;
     Mat camera_matrix_, dist_coeffs_;
     LaneDetectorNodeParams params_;
     ros::NodeHandle nh_;
     ros::NodeHandle nh_priv_ = ros::NodeHandle("~");
     bool first_time = true;
     bool has_parameters = false;
+    bool has_camera_info = false;
     LaneDetector ldetector;
 public:
     void onInit() {
@@ -96,9 +98,9 @@ public:
 
         image_transport::ImageTransport it(nh_);
 //        image_transport::ImageTransport it_priv(nh_priv_);
-        img_sub_ = it.subscribeCamera("image_raw", 1, &LaneDetectorNode::imageCallback, this);
+        img_sub_ = it.subscribe("image_raw", 1, &LaneDetectorNode::imageCallback, this);
         debug_pub_ = it.advertise("/lane_detector/debug", 1);
-
+        cam_info_sub_ = nh_.subscribe("camera_info", 1, &LaneDetectorNode::camInfoCallback, this);
         camera_matrix_ = cv::Mat::zeros(3, 3, CV_64F);
         getParameters();
 //        projectCoordinates();
@@ -251,17 +253,24 @@ private:
 //        }
 //
 //    }
-
-    void imageCallback(const sensor_msgs::ImageConstPtr &msg, const sensor_msgs::CameraInfoConstPtr &cinfo) {
-        cout << "parseCameraInfo" << endl;
-        parseCameraInfo(cinfo, camera_matrix_, dist_coeffs_);
-        if (first_time) {
+    void camInfoCallback(const sensor_msgs::CameraInfoConstPtr &cinfo){
+//        cout << "CAM" << endl;
+        if (!has_camera_info) {
+            cout << "CAM_parsed" << endl;
+            parseCameraInfo(cinfo, camera_matrix_, dist_coeffs_);
+            has_camera_info = true;
+        }
+    }
+    void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
+//        cout << "parseCameraInfo" << endl;
+//        parseCameraInfo(cinfo, camera_matrix_, dist_coeffs_);
+        if (first_time && has_camera_info) {
 //            cout << "first time" << endl;
             params_.detector_p.image_w = msg->width;
             params_.detector_p.image_h = msg->height;
             projectCoordinates();
             first_time = false;
-        } else {
+        } else if (has_camera_info) {
 //            cout << "IMAGE" << endl;
             Mat image = cv_bridge::toCvShare(msg, "bgr8")->image;
             Mat out_image = image.clone();
