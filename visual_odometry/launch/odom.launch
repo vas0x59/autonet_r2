@@ -1,0 +1,8 @@
+<launch>
+    <node pkg="visual_odometry" type="visual_odom" name="visual_odometry" output="screen">
+        <param name="update_rate" value="30" />
+        <param name="odom_frame_name" value="visual_odom" />
+        <param name="odom_topic" value="visual_odom" />
+        <param name="base_frame_name" value="base_link" />
+    </node>
+</launch>
