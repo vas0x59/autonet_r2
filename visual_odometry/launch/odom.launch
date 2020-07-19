@@ -4,5 +4,7 @@
         <param name="odom_frame_name" value="visual_odom" />
         <param name="odom_topic" value="visual_odom" />
         <param name="base_frame_name" value="base_link" />
+        <remap from="image_raw" to="camera1/image_raw"/>
+        <remap from="camera_info" to="camera1/camera_info"/>
     </node>
 </launch>

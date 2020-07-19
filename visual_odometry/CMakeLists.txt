@@ -8,7 +8,7 @@ project(visual_odometry)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-#   cv_bridge
+   cv_bridge
   geometry_msgs
   nav_msgs
   image_transport
@@ -44,6 +44,6 @@ add_executable(visual_odom src/visual_odom.cpp)
 
 
 target_link_libraries(visual_odom
-  ${catkin_LIBRARIES}
+  ${catkin_LIBRARIES} ${OpenCV_LIBS}
 )
 catkin_package()
